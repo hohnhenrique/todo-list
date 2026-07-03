@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>minha lista — caderno de tarefas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --desk: #dfe3d6;
+    --desk-shadow: #c7cbbc;
+    --paper: #f4f2e8;
+    --paper-edge: #e8e4d4;
+    --ink: #262b22;
+    --ink-soft: #565f4f;
+    --muted: #93998a;
+    --line: #cdd1bf;
+    --margin-red: #c17862;
+    --pencil: #3d6b54;
+    --pencil-dark: #2c4f3d;
+    --clip: #8a8f7c;
+    --danger: #b5533c;
+    --radius: 3px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  body{
+    background: var(--desk);
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.35), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(0,0,0,0.03), transparent 45%);
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 48px 16px 80px;
+  }
+
+  .notebook{
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    background: var(--paper);
+    border-radius: 2px;
+    box-shadow:
+      0 1px 0 var(--paper-edge),
+      0 18px 40px -12px rgba(35,40,28,0.35),
+      0 4px 10px -4px rgba(35,40,28,0.2);
+    padding: 40px 32px 28px 56px;
+    transform: rotate(-0.4deg);
+  }
+
+  .notebook::before{
+    /* torn top edge */
+    content: "";
+    position: absolute;
+    top: -6px; left: 8px; right: 8px;
+    height: 12px;
+    background: var(--paper);
+    clip-path: polygon(0% 100%, 3% 20%, 6% 90%, 9% 10%, 13% 80%, 17% 15%, 21% 95%, 25% 25%, 29% 85%, 33% 5%, 37% 90%, 41% 20%, 45% 80%, 49% 10%, 53% 95%, 57% 25%, 61% 85%, 65% 15%, 69% 90%, 73% 10%, 77% 80%, 81% 20%, 85% 95%, 89% 15%, 93% 85%, 97% 10%, 100% 100%);
+  }
+
+  .spiral{
+    position: absolute;
+    left: 18px; top: 0; bottom: 0;
+    width: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    pointer-events: none;
+  }
+  .spiral span{
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: var(--desk);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.5);
+  }
+
+  .margin-rule{
+    position: absolute;
+    left: 46px; top: 0; bottom: 0;
+    width: 1px;
+    background: var(--margin-red);
+    opacity: 0.55;
+  }
+
+  header{
+    position: relative;
+    margin-bottom: 22px;
+  }
+
+  h1{
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: 2.6rem;
+    margin: 0 0 2px;
+    color: var(--pencil-dark);
+    line-height: 1;
+  }
+  h1 .check{
+    display: inline-block;
+    transform: rotate(-8deg);
+    margin-right: 4px;
+  }
+
+  .subline{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    text-transform: lowercase;
+  }
+
+  .add-row{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    position: relative;
+  }
+
+  .add-row input[type="text"]{
+    flex: 1;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.98rem;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px dashed var(--line);
+    padding: 8px 2px;
+    outline: none;
+  }
+  .add-row input[type="text"]::placeholder{
+    color: var(--muted);
+    font-style: italic;
+  }
+  .add-row input[type="text"]:focus{
+    border-bottom-color: var(--pencil);
+  }
+
+  .add-btn{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    background: var(--pencil);
+    color: #f4f2e8;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0 16px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.15s ease;
+  }
+  .add-btn:hover{ background: var(--pencil-dark); }
+  .add-btn:active{ transform: scale(0.94); }
+  .add-btn:focus-visible, .add-row input:focus-visible{
+    outline: 2px solid var(--pencil);
+    outline-offset: 2px;
+  }
+
+  .tabs{
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .tab{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    text-transform: lowercase;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tab:hover{ border-color: var(--pencil); color: var(--pencil-dark); }
+  .tab.active{
+    background: var(--pencil-dark);
+    border-color: var(--pencil-dark);
+    color: #f4f2e8;
+  }
+
+  ul.tasks{
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0;
+    min-height: 60px;
+  }
+
+  li.task{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 2px;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+    animation: appear 0.25s ease;
+  }
+  li.task:last-child{ border-bottom: none; }
+
+  @keyframes appear{
+    from{ opacity: 0; transform: translateY(-4px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  .box{
+    flex-shrink: 0;
+    width: 20px; height: 20px;
+    margin-top: 2px;
+    border: 2px solid var(--ink-soft);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    transform: rotate(-1deg);
+  }
+  .box:hover{ border-color: var(--pencil); }
+  .box svg{
+    position: absolute;
+    top: -3px; left: -3px;
+    width: 24px; height: 24px;
+    stroke: var(--pencil);
+    stroke-width: 2.4;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 30;
+    stroke-dashoffset: 30;
+    transition: stroke-dashoffset 0.25s ease;
+  }
+  li.task.done .box svg{ stroke-dashoffset: 0; }
+  li.task.done .box{ border-color: var(--pencil); }
+
+  .task-text{
+    flex: 1;
+    font-size: 0.98rem;
+    line-height: 1.35;
+    padding-top: 1px;
+    word-break: break-word;
+    outline: none;
+  }
+  li.task.done .task-text{
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--danger);
+    text-decoration-thickness: 1.5px;
+  }
+
+  .meta{
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .del-btn{
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+  li.task:hover .del-btn, li.task:focus-within .del-btn{ opacity: 1; }
+  .del-btn:hover{ color: var(--danger); }
+
+  .empty{
+    font-family: 'Caveat', cursive;
+    font-size: 1.4rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 26px 10px 10px;
+  }
+
+  footer{
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1.5px dashed var(--line);
+  }
+
+  .progress-row{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .progress-track{
+    flex: 1;
+    height: 8px;
+    background: var(--paper-edge);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill{
+    height: 100%;
+    width: 0%;
+    background: repeating-linear-gradient(
+      -45deg, var(--pencil), var(--pencil) 4px, var(--pencil-dark) 4px, var(--pencil-dark) 8px
+    );
+    transition: width 0.3s ease;
+  }
+  .progress-count{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  .actions-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ghost-btn{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    padding: 6px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .ghost-btn:hover{ border-color: var(--pencil); color: var(--pencil-dark); }
+
+  .file-tools{ display: flex; gap: 8px; }
+  #import-input{ display: none; }
+
+  .toast{
+    position: fixed;
+    bottom: 22px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--pencil-dark);
+    color: #f4f2e8;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    padding: 9px 16px;
+    border-radius: var(--radius);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10;
+  }
+  .toast.show{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 480px){
+    .notebook{ padding: 34px 18px 22px 46px; }
+    .spiral{ left: 10px; width: 14px; }
+    .margin-rule{ left: 32px; }
+    h1{ font-size: 2.1rem; }
+    .actions-row{ flex-direction: column; align-items: stretch; }
+    .file-tools{ justify-content: center; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="notebook">
+  <div class="spiral" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <div class="margin-rule" aria-hidden="true"></div>
+
+  <header>
+    <h1><span class="check">✓</span>minha lista</h1>
+    <div class="subline" id="today"></div>
+  </header>
+
+  <form class="add-row" id="add-form">
+    <input type="text" id="new-task" placeholder="escrever uma nova tarefa…" autocomplete="off" maxlength="200">
+    <button type="submit" class="add-btn">adicionar</button>
+  </form>
+
+  <div class="tabs" role="tablist" aria-label="Filtrar tarefas">
+    <button class="tab active" data-filter="all">todas</button>
+    <button class="tab" data-filter="pending">pendentes</button>
+    <button class="tab" data-filter="done">concluídas</button>
+  </div>
+
+  <ul class="tasks" id="task-list"></ul>
+  <div class="empty" id="empty-msg" hidden>página em branco — adicione a primeira tarefa</div>
+
+  <footer>
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-count" id="progress-count">0/0</div>
+    </div>
+    <div class="actions-row">
+      <button class="ghost-btn" id="clear-done">limpar concluídas</button>
+      <div class="file-tools">
+        <button class="ghost-btn" id="export-btn">⬇ exportar .json</button>
+        <button class="ghost-btn" id="import-btn">⬆ importar .json</button>
+        <input type="file" id="import-input" accept="application/json">
+      </div>
+    </div>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'todo-notebook-tasks-v1';
+  const listEl = document.getElementById('task-list');
+  const emptyEl = document.getElementById('empty-msg');
+  const form = document.getElementById('add-form');
+  const input = document.getElementById('new-task');
+  const tabs = document.querySelectorAll('.tab');
+  const progressFill = document.getElementById('progress-fill');
+  const progressCount = document.getElementById('progress-count');
+  const clearDoneBtn = document.getElementById('clear-done');
+  const exportBtn = document.getElementById('export-btn');
+  const importBtn = document.getElementById('import-btn');
+  const importInput = document.getElementById('import-input');
+  const toastEl = document.getElementById('toast');
+
+  let tasks = [];
+  let filter = 'all';
+  let toastTimer = null;
+
+  function uid(){
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      tasks = raw ? JSON.parse(raw) : [];
+    }catch(e){
+      tasks = [];
+    }
+  }
+
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  function formatDate(iso){
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) + ' · ' +
+           d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function setToday(){
+    const el = document.getElementById('today');
+    const d = new Date();
+    el.textContent = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  function render(){
+    listEl.innerHTML = '';
+    const visible = tasks.filter(t => {
+      if(filter === 'pending') return !t.done;
+      if(filter === 'done') return t.done;
+      return true;
+    });
+
+    emptyEl.hidden = tasks.length > 0;
+    if(tasks.length > 0 && visible.length === 0){
+      const li = document.createElement('div');
+      li.className = 'empty';
+      li.textContent = filter === 'done' ? 'nenhuma tarefa concluída ainda' : 'nenhuma tarefa pendente — tudo em dia';
+      listEl.appendChild(li);
+    }
+
+    visible.forEach(task => {
+      const li = document.createElement('li');
+      li.className = 'task' + (task.done ? ' done' : '');
+      li.dataset.id = task.id;
+
+      const box = document.createElement('button');
+      box.className = 'box';
+      box.type = 'button';
+      box.setAttribute('aria-label', task.done ? 'marcar como pendente' : 'marcar como concluída');
+      box.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+      box.addEventListener('click', () => toggleTask(task.id));
+
+      const textWrap = document.createElement('div');
+      textWrap.style.flex = '1';
+
+      const text = document.createElement('div');
+      text.className = 'task-text';
+      text.textContent = task.text;
+      text.contentEditable = 'true';
+      text.spellcheck = false;
+      text.addEventListener('blur', () => editTask(task.id, text.textContent));
+      text.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter'){ e.preventDefault(); text.blur(); }
+      });
+
+      const meta = document.createElement('span');
+      meta.className = 'meta';
+      meta.textContent = formatDate(task.createdAt);
+
+      textWrap.appendChild(text);
+      textWrap.appendChild(meta);
+
+      const del = document.createElement('button');
+      del.className = 'del-btn';
+      del.type = 'button';
+      del.setAttribute('aria-label', 'excluir tarefa');
+      del.innerHTML = '✕';
+      del.addEventListener('click', () => removeTask(task.id));
+
+      li.appendChild(box);
+      li.appendChild(textWrap);
+      li.appendChild(del);
+      listEl.appendChild(li);
+    });
+
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+    progressFill.style.width = pct + '%';
+    progressCount.textContent = done + '/' + total;
+  }
+
+  function addTask(text){
+    const trimmed = text.trim();
+    if(!trimmed) return;
+    tasks.unshift({ id: uid(), text: trimmed, done: false, createdAt: new Date().toISOString() });
+    save();
+    render();
+  }
+
+  function toggleTask(id){
+    const t = tasks.find(t => t.id === id);
+    if(t){ t.done = !t.done; save(); render(); }
+  }
+
+  function editTask(id, text){
+    const trimmed = text.trim();
+    const t = tasks.find(t => t.id === id);
+    if(!t) return;
+    if(!trimmed){ removeTask(id); return; }
+    t.text = trimmed;
+    save();
+    render();
+  }
+
+  function removeTask(id){
+    tasks = tasks.filter(t => t.id !== id);
+    save();
+    render();
+  }
+
+  function clearDone(){
+    const before = tasks.length;
+    tasks = tasks.filter(t => !t.done);
+    save();
+    render();
+    if(tasks.length !== before) showToast('tarefas concluídas removidas');
+  }
+
+  function exportJSON(){
+    const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = 'minha-lista-' + stamp + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('arquivo .json baixado');
+  }
+
+  function importJSON(file){
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try{
+        const data = JSON.parse(e.target.result);
+        if(!Array.isArray(data)) throw new Error('formato inválido');
+        const valid = data.filter(t => t && typeof t.text === 'string');
+        tasks = valid.map(t => ({
+          id: t.id || uid(),
+          text: t.text,
+          done: !!t.done,
+          createdAt: t.createdAt || new Date().toISOString()
+        }));
+        save();
+        render();
+        showToast('lista importada com sucesso');
+      }catch(err){
+        showToast('não foi possível ler esse arquivo');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    addTask(input.value);
+    input.value = '';
+    input.focus();
+  });
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      filter = tab.dataset.filter;
+      render();
+    });
+  });
+
+  clearDoneBtn.addEventListener('click', clearDone);
+  exportBtn.addEventListener('click', exportJSON);
+  importBtn.addEventListener('click', () => importInput.click());
+  importInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file) importJSON(file);
+    importInput.value = '';
+  });
+
+  setToday();
+  load();
+  render();
+})();
+</script>
+
+</body>
+</html>
